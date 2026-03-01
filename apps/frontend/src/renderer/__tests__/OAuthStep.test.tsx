@@ -7,9 +7,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { ClaudeProfile } from '../../shared/types';
 
-// Import browser mock to get full ElectronAPI structure
-import '../lib/browser-mock';
-
 // Helper to create test profiles
 function createTestProfile(overrides: Partial<ClaudeProfile> = {}): ClaudeProfile {
   return {
@@ -36,17 +33,18 @@ describe('OAuthStep Profile Management Logic', () => {
     // Reset all mocks
     vi.clearAllMocks();
 
-    // Setup window.electronAPI mocks
-    if (window.electronAPI) {
-      window.electronAPI.getClaudeProfiles = mockGetClaudeProfiles;
-      window.electronAPI.saveClaudeProfile = mockSaveClaudeProfile;
-      window.electronAPI.deleteClaudeProfile = mockDeleteClaudeProfile;
-      window.electronAPI.renameClaudeProfile = mockRenameClaudeProfile;
-      window.electronAPI.setActiveClaudeProfile = mockSetActiveClaudeProfile;
-      window.electronAPI.initializeClaudeProfile = mockInitializeClaudeProfile;
-      window.electronAPI.setClaudeProfileToken = mockSetClaudeProfileToken;
-      window.electronAPI.onTerminalOAuthToken = mockOnTerminalOAuthToken;
+    // Setup window.electronAPI mocks - create if doesn't exist
+    if (!window.electronAPI) {
+      (window as any).electronAPI = {};
     }
+    window.electronAPI.getClaudeProfiles = mockGetClaudeProfiles;
+    window.electronAPI.saveClaudeProfile = mockSaveClaudeProfile;
+    window.electronAPI.deleteClaudeProfile = mockDeleteClaudeProfile;
+    window.electronAPI.renameClaudeProfile = mockRenameClaudeProfile;
+    window.electronAPI.setActiveClaudeProfile = mockSetActiveClaudeProfile;
+    window.electronAPI.initializeClaudeProfile = mockInitializeClaudeProfile;
+    window.electronAPI.setClaudeProfileToken = mockSetClaudeProfileToken;
+    window.electronAPI.onTerminalOAuthToken = mockOnTerminalOAuthToken;
 
     // Default mock implementations
     mockGetClaudeProfiles.mockResolvedValue({

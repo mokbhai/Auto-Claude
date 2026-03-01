@@ -25,14 +25,8 @@ function createTestTask(overrides: Partial<Task> = {}): Task {
   };
 }
 
-// Import browser mock to get full ElectronAPI structure
-import '../lib/browser-mock';
-
-// Mock the window.electronAPI.updateTask specifically
+// Mock window.electronAPI for tests
 const mockUpdateTask = vi.fn();
-
-// Override window.electronAPI for these tests
-const originalWindow = global.window;
 
 describe('TaskEditDialog Logic', () => {
   beforeEach(() => {
@@ -44,10 +38,11 @@ describe('TaskEditDialog Logic', () => {
       error: null
     });
 
-    // Override just the updateTask method on the existing electronAPI
-    if (window.electronAPI) {
-      window.electronAPI.updateTask = mockUpdateTask;
+    // Setup window.electronAPI mock - create if doesn't exist
+    if (!window.electronAPI) {
+      (window as any).electronAPI = {};
     }
+    window.electronAPI.updateTask = mockUpdateTask;
 
     // Clear mock calls
     mockUpdateTask.mockReset();
@@ -55,7 +50,6 @@ describe('TaskEditDialog Logic', () => {
 
   afterEach(() => {
     vi.clearAllMocks();
-    (global as typeof globalThis & { window: typeof window }).window = originalWindow;
   });
 
   describe('Task Title/Description Validation', () => {

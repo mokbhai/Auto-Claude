@@ -1,5 +1,5 @@
-// Initialize browser mock before anything else (no-op in Electron)
-import './lib/browser-mock';
+// Initialize web API client (replaces Electron IPC with HTTP/WebSocket)
+import './lib/web-api-init';
 
 // Initialize i18n before React
 import '../shared/i18n';

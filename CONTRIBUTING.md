@@ -74,10 +74,9 @@ Read the full CLA here: [CLA.md](CLA.md)
 Before contributing, ensure you have the following installed:
 
 - **Python 3.12+** - For the backend framework
-- **Node.js 24+** - For the Electron frontend
+- **Node.js 20+** - For the web frontend
 - **npm 10+** - Package manager for the frontend (comes with Node.js)
 - **uv** (recommended) or **pip** - Python package manager
-- **CMake** - Required for building native dependencies (e.g., LadybugDB)
 - **Git** - Version control
 
 ### Installing Python 3.12
@@ -102,7 +101,7 @@ sudo apt install python3.12 python3.12-venv
 sudo dnf install python3.12
 ```
 
-### Installing Node.js 24+
+### Installing Node.js 20+
 
 **Windows:**
 ```bash
@@ -111,40 +110,18 @@ winget install OpenJS.NodeJS.LTS
 
 **macOS:**
 ```bash
-brew install node@24
+brew install node@22
 ```
 
 **Linux (Ubuntu/Debian):**
 ```bash
-curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt install -y nodejs
 ```
 
 **Linux (Fedora):**
 ```bash
 sudo dnf install nodejs npm
-```
-
-### Installing CMake
-
-**Windows:**
-```bash
-winget install Kitware.CMake
-```
-
-**macOS:**
-```bash
-brew install cmake
-```
-
-**Linux (Ubuntu/Debian):**
-```bash
-sudo apt install cmake
-```
-
-**Linux (Fedora):**
-```bash
-sudo dnf install cmake
 ```
 
 ## Quick Start
@@ -170,17 +147,17 @@ npm start
 
 The project consists of two main components:
 
-1. **Python Backend** (`apps/backend/`) - The core autonomous coding framework
-2. **Electron Frontend** (`apps/frontend/`) - Desktop UI
+1. **Python Backend** (`apps/backend/`) - The core autonomous coding framework with FastAPI web server
+2. **React Frontend** (`apps/frontend/`) - Web UI built with Vite
 
 From the repository root, two commands handle everything:
 
 ```bash
-# Install all dependencies (Python backend + Electron frontend)
+# Install all dependencies (Python backend + React frontend)
 npm run install:all
 
-# Start development mode (hot reload)
-npm run dev
+# Start development mode
+./start-web.sh
 ```
 
 `npm run install:all` automatically:
@@ -198,26 +175,36 @@ claude setup-token
 # Then edit apps/backend/.env with your token and any other provider keys
 ```
 
+### Development Workflow
+
+```bash
+# Terminal 1: Start the backend API server
+cd apps/backend
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+uvicorn web.app:create_app --factory --reload --port 3000
+
+# Terminal 2: Start the frontend dev server (with HMR)
+cd apps/frontend
+npm run dev
+```
+
+The frontend dev server runs on `http://localhost:5173` and proxies API requests to the backend.
+
 ### Other Useful Commands
 
 ```bash
-npm start              # Build and run production
-npm run build          # Build frontend for production
-npm run package        # Package for distribution
-npm run test:backend   # Run Python tests
+# Build frontend for production
+cd apps/frontend && npm run build
+
+# Run Python tests
+npm run test:backend
+
+# Run frontend tests
+cd apps/frontend && npm test
+
+# Lint and typecheck
+cd apps/frontend && npm run lint && npm run typecheck
 ```
-
-<details>
-<summary><b>Windows users:</b> If installation fails with node-gyp errors, click here</summary>
-
-Auto Claude automatically downloads prebuilt binaries for Windows. If prebuilts aren't available for your Electron version yet, you'll need Visual Studio Build Tools:
-
-1. Download [Visual Studio Build Tools 2022](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
-2. Select "Desktop development with C++" workload
-3. In "Individual Components", add "MSVC v143 - VS 2022 C++ x64/x86 Spectre-mitigated libs"
-4. Restart terminal and run `npm install` again
-
-</details>
 
 > **Note:** For regular usage, we recommend downloading the pre-built releases from [GitHub Releases](https://github.com/AndyMik90/Auto-Claude/releases). Running from source is primarily for contributors and those testing unreleased features.
 
@@ -877,17 +864,19 @@ Auto Claude consists of two main parts:
 The core autonomous coding framework:
 
 - **Entry Points**: `run.py` (build runner), `spec_runner.py` (spec creator)
+- **Web Server**: `web/` - FastAPI application with REST/WebSocket APIs
 - **Agent System**: `agent.py`, `client.py`, `prompts/`
 - **Execution**: `coordinator.py` (parallel), `worktree.py` (isolation)
 - **Memory**: `memory.py` (file-based), `graphiti_memory.py` (graph-based)
 - **QA**: `qa_loop.py`, `prompts/qa_*.md`
 
-### Electron Frontend (`apps/frontend/`)
+### React Frontend (`apps/frontend/`)
 
-Desktop interface:
+Web interface:
 
-- **Main Process**: `src/main/` - Electron main process, IPC handlers
 - **Renderer**: `src/renderer/` - React UI components
+- **API Client**: `src/renderer/lib/api-client.ts` - HTTP/WebSocket client
+- **Store Adapter**: `src/renderer/lib/store-adapter.ts` - Unified API abstraction
 - **Shared**: `src/shared/` - Types and utilities
 
 For detailed architecture information, see [CLAUDE.md](CLAUDE.md).

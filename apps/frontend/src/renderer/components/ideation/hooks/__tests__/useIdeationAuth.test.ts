@@ -7,9 +7,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 
-// Import browser mock to get full ElectronAPI structure
-import '../../../../lib/browser-mock';
-
 // Import the hook to test
 import { useIdeationAuth } from '../useIdeationAuth';
 
@@ -35,11 +32,12 @@ describe('useIdeationAuth', () => {
       testConnectionResult: null
     } as Partial<typeof useSettingsStore.getState>);
 
-    // Setup window.electronAPI mock
-    if (window.electronAPI) {
-      window.electronAPI.checkSourceToken = mockCheckSourceToken;
-      window.electronAPI.getAPIProfiles = mockGetApiProfiles;
+    // Setup window.electronAPI mock - create if doesn't exist
+    if (!window.electronAPI) {
+      (window as any).electronAPI = {};
     }
+    window.electronAPI.checkSourceToken = mockCheckSourceToken;
+    window.electronAPI.getAPIProfiles = mockGetApiProfiles;
 
     // Default mock implementation - has source token
     mockCheckSourceToken.mockResolvedValue({

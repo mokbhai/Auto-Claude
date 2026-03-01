@@ -2,13 +2,11 @@
 
 This file provides guidance to Claude Code when working with this repository.
 
-Auto Claude is an autonomous multi-agent coding framework that plans, builds, and validates software for you. It's a monorepo with a Python backend (CLI + agent logic) and an Electron/React frontend (desktop UI).
-
-> **Deep-dive reference:** [ARCHITECTURE.md](shared_docs/ARCHITECTURE.md) | **Frontend contributing:** [apps/frontend/CONTRIBUTING.md](apps/frontend/CONTRIBUTING.md)
+Auto Claude is an autonomous multi-agent coding framework that plans, builds, and validates software for you. It's a monorepo with a Python backend (CLI + agent logic + FastAPI web server) and a React/TypeScript frontend (web UI).
 
 ## Product Overview
 
-Auto Claude is a desktop application (+ CLI) where users describe a goal and AI agents autonomously handle planning, implementation, and QA validation. By default, work happens in isolated git worktrees so the main branch stays safe, but direct mode is available for faster iteration.
+Auto Claude is a web application (+ CLI) where users describe a goal and AI agents autonomously handle planning, implementation, and QA validation. By default, work happens in isolated git worktrees so the main branch stays safe, but direct mode is available for faster iteration.
 
 **Core workflow:** User creates a task → Spec creation pipeline assesses complexity and writes a specification → Planner agent breaks it into subtasks → Coder agent implements (can spawn parallel subagents) → QA reviewer validates → QA fixer resolves issues → User reviews and merges.
 
@@ -26,7 +24,8 @@ Auto Claude is a desktop application (+ CLI) where users describe a goal and AI 
 - **Optional Isolated Workspaces** — Git worktree isolation (default) keeps main branch safe; direct mode available for faster iteration; AI-powered semantic merge
 - **Flexible Authentication** — Use a Claude Code subscription (OAuth) or API profiles with any Anthropic-compatible endpoint (e.g., Anthropic API, z.ai for GLM models)
 - **Multi-Account Swapping** — Register multiple Claude accounts; when one hits a rate limit, Auto Claude automatically switches to an available account
-- **Cross-Platform** — Native desktop app for Windows, macOS, and Linux with auto-updates
+- **Web Interface** — Browser-based UI accessible from any platform
+- **REST API** — Full REST/WebSocket API for programmatic access
 
 ## Critical Rules
 
@@ -34,13 +33,11 @@ Auto Claude is a desktop application (+ CLI) where users describe a goal and AI 
 
 **i18n required** — All frontend user-facing text uses `react-i18next` translation keys. Hardcoded strings in JSX/TSX break localization for non-English users. Add keys to both `en/*.json` and `fr/*.json`.
 
-**Platform abstraction** — Use the platform modules in `apps/frontend/src/main/platform/` or `apps/backend/core/platform/` instead of `process.platform` directly. CI tests all three platforms, and raw platform checks cause failures.
+**Platform abstraction** — Use the platform modules in `apps/backend/core/platform/` instead of `process.platform` directly. CI tests all three platforms, and raw platform checks cause failures.
 
 **No time estimates** — Provide priority-based ordering instead of duration predictions.
 
 **PR target** — Always target the `develop` branch for PRs, not `main`. Main is reserved for releases.
-
-**No console.log in production code** — `console.log` output is invisible in bundled Electron apps. Use Sentry for error tracking in production; reserve `console.log` for development only.
 
 ## Work Approach: Orchestrator-First
 
@@ -78,7 +75,9 @@ Your context window will be automatically compacted as it approaches its limit, 
 
 ## Known Gotchas
 
-**Electron path resolution** — For bug fixes in the Electron app, check path resolution differences between dev and production builds (`app.isPackaged`, `process.resourcesPath`). Paths that work in dev often break when Electron is bundled for production — verify both contexts.
+**Web backend static files** — The frontend must be built before starting the web server in production mode. The build outputs to `apps/backend/web/static/`. Run `npm run build` in `apps/frontend` first.
+
+**WebSocket connections** — Terminal I/O uses WebSocket connections. Ensure the backend WebSocket endpoint is accessible and CORS is properly configured for your deployment.
 
 ### Resetting PR Review State
 
@@ -100,7 +99,12 @@ autonomous-coding/
 │   │   ├── agents/              # planner, coder, session management
 │   │   ├── qa/                  # reviewer, fixer, loop, criteria
 │   │   ├── spec/                # Spec creation pipeline
-│   │   ├── cli/                 # CLI commands (spec, build, workspace, QA)
+│   │   ├── cli/                 # CLI commands (spec, build, workspace, QA, web)
+│   │   ├── web/                 # FastAPI web server & REST API
+│   │   │   ├── app.py           # Application factory
+│   │   │   ├── routers/         # API endpoints (tasks, terminals, github, etc.)
+│   │   │   ├── services/        # Event bus, PTY manager
+│   │   │   └── static/          # Built frontend assets
 │   │   ├── context/             # Task context building, semantic search
 │   │   ├── runners/             # Standalone runners (spec, roadmap, insights, github)
 │   │   ├── services/            # Background services, recovery orchestration
@@ -108,30 +112,19 @@ autonomous-coding/
 │   │   ├── project/             # Project analysis, security profiles
 │   │   ├── merge/               # Intent-aware semantic merge for parallel agents
 │   │   └── prompts/             # Agent system prompts (.md)
-│   └── frontend/                # Electron desktop UI
+│   └── frontend/                # React web UI
 │       └── src/
-│           ├── main/            # Electron main process
-│           │   ├── agent/       # Agent queue, process, state, events
-│           │   ├── claude-profile/ # Multi-profile credentials, token refresh, usage
-│           │   ├── terminal/    # PTY daemon, lifecycle, Claude integration
-│           │   ├── platform/    # Cross-platform abstraction
-│           │   ├── ipc-handlers/# 40+ handler modules by domain
-│           │   ├── services/    # SDK session recovery, profile service
-│           │   └── changelog/   # Changelog generation and formatting
-│           ├── preload/         # Electron preload scripts (electronAPI bridge)
 │           ├── renderer/        # React UI
-│           │   ├── components/  # UI components (onboarding, settings, task, terminal, github, etc.)
+│           │   ├── features/    # Feature modules (tasks, terminals, settings, etc.)
+│           │   ├── shared/      # Shared components, hooks, lib
+│           │   │   └── lib/     # api-client.ts, store-adapter.ts
 │           │   ├── stores/      # 24+ Zustand state stores
-│           │   ├── contexts/    # React contexts (ViewStateContext)
-│           │   ├── hooks/       # Custom hooks (useIpc, useTerminal, etc.)
-│           │   ├── styles/      # CSS / Tailwind styles
 │           │   └── App.tsx      # Root component
-│           ├── shared/          # Shared types, i18n, constants, utils
-│           │   ├── i18n/locales/# en/*.json, fr/*.json
-│           │   ├── constants/   # themes.ts, etc.
-│           │   ├── types/       # 19+ type definition files
-│           │   └── utils/       # ANSI sanitizer, shell escape, provider detection
-│           └── types/           # TypeScript type definitions
+│           └── shared/          # Shared types, i18n, constants, utils
+│               ├── i18n/locales/# en/*.json, fr/*.json
+│               ├── constants/   # themes.ts, etc.
+│               ├── types/       # Type definition files
+│               └── utils/       # ANSI sanitizer, shell escape, provider detection
 ├── guides/                      # Documentation
 ├── tests/                       # Backend test suite
 └── scripts/                     # Build and utility scripts
@@ -147,13 +140,29 @@ cd apps/backend && uv venv && uv pip install -r requirements.txt
 cd apps/frontend && npm install
 ```
 
+### Running the Application
+```bash
+# Web mode (recommended)
+./start-web.sh                   # Build frontend and start web server
+./start-web.sh --port 8080       # Custom port
+
+# Development mode (separate terminals)
+# Terminal 1: Backend API
+cd apps/backend && uvicorn web.app:create_app --factory --reload
+
+# Terminal 2: Frontend dev server
+cd apps/frontend && npm run dev
+
+# CLI only
+cd apps/backend && python run.py --spec 001
+```
+
 ### Testing
 
 | Stack | Command | Tool |
 |-------|---------|------|
 | Backend | `apps/backend/.venv/bin/pytest tests/ -v` | pytest |
 | Frontend unit | `cd apps/frontend && npm test` | Vitest |
-| Frontend E2E | `cd apps/frontend && npm run test:e2e` | Playwright |
 | All backend | `npm run test:backend` (from root) | pytest |
 
 ### Releases
@@ -170,7 +179,18 @@ See [RELEASE.md](RELEASE.md) for full release process.
 
 Client: `apps/backend/core/client.py` — `create_client()` returns a configured `ClaudeSDKClient` with security hooks, tool permissions, and MCP server integration.
 
-Model and thinking level are user-configurable (via the Electron UI settings or CLI override). Use `phase_config.py` helpers to resolve the correct values
+Model and thinking level are user-configurable (via the web UI settings or CLI override). Use `phase_config.py` helpers to resolve the correct values.
+
+### Web Server (`apps/backend/web/`)
+
+FastAPI-based REST/WebSocket API:
+
+- **`app.py`** — Application factory, CORS config, static file serving
+- **`routers/`** — API endpoints for projects, tasks, terminals, github, gitlab, insights, roadmap, settings, profiles, context
+- **`services/event_bus.py`** — WebSocket event broadcasting
+- **`services/pty_manager.py`** — PTY process management for terminals
+
+API documentation available at `/api/docs` when running the server.
 
 ### Agent Prompts (`apps/backend/prompts/`)
 
@@ -188,13 +208,13 @@ Each spec in `.auto-claude/specs/XXX-name/` contains: `spec.md`, `requirements.j
 
 ### Memory System (Graphiti)
 
-Graph-based semantic memory in `integrations/graphiti/`. Configured through the Electron app's onboarding/settings UI (CLI users can alternatively set `GRAPHITI_ENABLED=true` in `.env`). See [ARCHITECTURE.md](shared_docs/ARCHITECTURE.md#memory-system) for details.
+Graph-based semantic memory in `integrations/graphiti/`. Configured through the web UI's onboarding/settings (CLI users can alternatively set `GRAPHITI_ENABLED=true` in `.env`).
 
 ## Frontend Development
 
 ### Tech Stack
 
-React 19, TypeScript (strict), Electron 39, Zustand 5, Tailwind CSS v4, Radix UI, xterm.js 6, Vite 7, Vitest 4, Biome 2, Motion (Framer Motion)
+React 19, TypeScript (strict), Zustand 5, Tailwind CSS v4, Radix UI, xterm.js 6, Vite 7, Vitest 4, Biome 2, Motion (Framer Motion)
 
 ### Path Aliases (tsconfig.json)
 
@@ -202,11 +222,35 @@ React 19, TypeScript (strict), Electron 39, Zustand 5, Tailwind CSS v4, Radix UI
 |-------|---------|
 | `@/*` | `src/renderer/*` |
 | `@shared/*` | `src/shared/*` |
-| `@preload/*` | `src/preload/*` |
 | `@features/*` | `src/renderer/features/*` |
 | `@components/*` | `src/renderer/shared/components/*` |
 | `@hooks/*` | `src/renderer/shared/hooks/*` |
 | `@lib/*` | `src/renderer/shared/lib/*` |
+
+### API Integration
+
+The frontend uses a unified API layer via `store-adapter.ts`:
+
+```typescript
+import { api } from '@/lib/store-adapter';
+
+// Projects
+const projects = await api.project.list();
+await api.project.add('/path/to/repo');
+
+// Tasks
+const tasks = await api.task.list(projectId);
+await api.task.create({ title: '...', description: '...' });
+await api.task.start(taskId);
+
+// Terminals
+const terminal = await api.terminal.create({ cwd: '/path' });
+const ws = api.terminal.connectWebSocket(terminal.id);
+
+// Settings
+const settings = await api.settings.get();
+await api.settings.save({ theme: 'dark' });
+```
 
 ### State Management (Zustand)
 
@@ -219,8 +263,6 @@ All state lives in `src/renderer/stores/`. Key stores:
 - `github/issues-store.ts`, `github/pr-review-store.ts` — GitHub integration
 - `insights-store.ts`, `roadmap-store.ts`, `kanban-settings-store.ts`
 
-Main process also has stores: `src/main/project-store.ts`, `src/main/terminal-session-store.ts`
-
 ### Styling
 
 - **Tailwind CSS v4** with `@tailwindcss/postcss` plugin
@@ -229,36 +271,12 @@ Main process also has stores: `src/main/project-store.ts`, `src/main/terminal-se
 - Utility: `clsx` + `tailwind-merge` via `cn()` helper
 - Component variants: `class-variance-authority` (CVA)
 
-### IPC Communication
+### Terminal System
 
-Main ↔ Renderer communication via Electron IPC:
-- **Handlers:** `src/main/ipc-handlers/` — organized by domain (github, gitlab, ideation, context, etc.)
-- **Preload:** `src/preload/` — exposes safe APIs to renderer
-- Pattern: renderer calls via `window.electronAPI.*`, main handles in IPC handler modules
-
-### Agent Management (`src/main/agent/`)
-
-The frontend manages agent lifecycle end-to-end:
-- **`agent-queue.ts`** — Queue routing, prioritization, spec number locking
-- **`agent-process.ts`** — Spawns and manages agent subprocess communication
-- **`agent-state.ts`** — Tracks running agent state and status
-- **`agent-events.ts`** — Agent lifecycle events and state transitions
-
-### Claude Profile System (`src/main/claude-profile/`)
-
-Multi-profile credential management for switching between Claude accounts:
-- **`credential-utils.ts`** — OS credential storage (Keychain/Windows Credential Manager)
-- **`token-refresh.ts`** — OAuth token lifecycle and automatic refresh
-- **`usage-monitor.ts`** — API usage tracking and rate limiting per profile
-- **`profile-scorer.ts`** — Scores profiles by usage and availability
-
-### Terminal System (`src/main/terminal/`)
-
-Full PTY-based terminal integration:
-- **`pty-daemon.ts`** / **`pty-manager.ts`** — Background PTY process management
-- **`terminal-lifecycle.ts`** — Session creation, cleanup, event handling
-- **`claude-integration-handler.ts`** — Claude SDK integration within terminals
-- Renderer: xterm.js 6 with WebGL, fit, web-links, serialize addons. Store: `terminal-store.ts`
+Full PTY-based terminal integration via WebSocket:
+- **Backend**: `apps/backend/web/services/pty-manager.ts` — PTY process management
+- **Frontend**: xterm.js 6 with WebGL, fit, web-links, serialize addons
+- **Communication**: WebSocket for real-time terminal I/O
 
 ## Code Quality
 
@@ -295,7 +313,7 @@ When adding new UI text: add keys to ALL language files, use `namespace:section.
 
 Supports Windows, macOS, Linux. CI tests all three.
 
-**Platform modules:** `apps/frontend/src/main/platform/` and `apps/backend/core/platform/`
+**Platform modules:** `apps/backend/core/platform/`
 
 | Function | Purpose |
 |----------|---------|
@@ -304,29 +322,23 @@ Supports Windows, macOS, Linux. CI tests all three.
 | `findExecutable(name)` | Cross-platform executable lookup |
 | `requiresShell(command)` | `.cmd/.bat` shell detection (Win) |
 
-Use `findExecutable()` and `joinPaths()` instead of hardcoded paths. See [ARCHITECTURE.md](shared_docs/ARCHITECTURE.md#cross-platform-development) for extended guide.
-
-## E2E Testing (Electron MCP)
-
-QA agents can interact with the running Electron app via Chrome DevTools Protocol:
-
-1. Start app: `npm run dev:debug` (debug mode for AI self-validation via Electron MCP)
-2. Set `ELECTRON_MCP_ENABLED=true` in `apps/backend/.env`
-3. Run QA: `python run.py --spec 001 --qa`
-
-Tools: `take_screenshot`, `click_by_text`, `fill_input`, `get_page_structure`, `send_keyboard_shortcut`, `eval`. See [ARCHITECTURE.md](shared_docs/ARCHITECTURE.md#end-to-end-testing) for full capabilities.
+Use `findExecutable()` and `joinPaths()` instead of hardcoded paths.
 
 ## Running the Application
 
 ```bash
-# CLI only
-cd apps/backend && python run.py --spec 001
+# Web mode (recommended)
+./start-web.sh                   # Build frontend and start web server
 
-# Desktop app
-npm start          # Production build + run
-npm run dev        # Development mode with HMR
-npm run dev:debug  # Debug mode with verbose output
-npm run dev:mcp    # Electron MCP server for AI debugging
+# Development mode (separate processes)
+# Terminal 1 - Backend API:
+cd apps/backend && uvicorn web.app:create_app --factory --reload
+
+# Terminal 2 - Frontend dev server:
+cd apps/frontend && npm run dev
+
+# CLI mode
+cd apps/backend && python run.py --spec 001
 
 # Project data: .auto-claude/specs/ (gitignored)
 ```

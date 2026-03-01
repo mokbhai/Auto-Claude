@@ -1,12 +1,12 @@
 # Auto Claude UI - Frontend
 
-A modern Electron + React desktop application for the Auto Claude autonomous coding framework.
+A modern React web application for the Auto Claude autonomous coding framework.
 
 ## Prerequisites
 
-### Node.js v24.12.0 LTS (Required)
+### Node.js 20+ (Required)
 
-This project requires **Node.js v24.12.0 LTS** (Latest LTS version as of December 2024).
+This project requires **Node.js 20+**.
 
 **Download:** https://nodejs.org/en/download/
 
@@ -19,12 +19,12 @@ winget install OpenJS.NodeJS.LTS
 
 **macOS:**
 ```bash
-brew install node@24
+brew install node@22
 ```
 
 **Linux (Ubuntu/Debian):**
 ```bash
-curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt install -y nodejs
 ```
 
@@ -33,17 +33,11 @@ sudo apt install -y nodejs
 sudo dnf install nodejs npm
 ```
 
-> **IMPORTANT:** When installing Node.js on Windows, make sure to check:
-> - "Add to PATH"
-> - "npm package manager"
-
 **Verify installation:**
 ```bash
-node --version  # Should output: v24.12.0
-npm --version   # Should output: 11.x.x or higher
+node --version  # Should output: v20.x.x or higher
+npm --version   # Should output: 10.x.x or higher
 ```
-
-> **Note:** npm is included with Node.js. If `npm` is not found after installing Node.js, you need to reinstall Node.js properly.
 
 ## Quick Start
 
@@ -51,21 +45,14 @@ npm --version   # Should output: 11.x.x or higher
 # Navigate to frontend directory
 cd apps/frontend
 
-# Install dependencies (includes native module rebuild)
+# Install dependencies
 npm install
 
 # Start development server
 npm run dev
 ```
 
-## Security
-
-This project maintains **0 vulnerabilities**. Run `npm audit` to verify.
-
-```bash
-npm audit
-# Expected output: found 0 vulnerabilities
-```
+The development server runs on `http://localhost:5173` with hot module replacement.
 
 ## Architecture
 
@@ -73,18 +60,6 @@ This project follows a **feature-based architecture** for better maintainability
 
 ```
 src/
-├── main/                    # Electron main process
-│   ├── agent/               # Agent management
-│   ├── changelog/           # Changelog generation
-│   ├── claude-profile/      # Claude profile management
-│   ├── insights/            # Code analysis
-│   ├── ipc-handlers/        # IPC communication handlers
-│   ├── terminal/            # PTY and terminal management
-│   └── updater/             # App update service
-│
-├── preload/                 # Electron preload scripts
-│   └── api/                 # IPC API modules
-│
 ├── renderer/                # React frontend
 │   ├── features/            # Feature modules (self-contained)
 │   │   ├── tasks/           # Task management, kanban, creation
@@ -104,32 +79,44 @@ src/
 │   │   ├── components/      # Reusable UI components
 │   │   ├── hooks/           # Shared React hooks
 │   │   └── lib/             # Utilities and helpers
+│   │       ├── api-client.ts    # HTTP/WebSocket client
+│   │       └── store-adapter.ts # Unified API abstraction
 │   │
 │   └── hooks/               # App-level hooks
 │
-└── shared/                  # Shared between main/renderer
+└── shared/                  # Shared types and utilities
     ├── types/               # TypeScript type definitions
     ├── constants/           # Application constants
     └── utils/               # Shared utilities
 ```
+
+## API Integration
+
+The frontend uses a unified API layer that supports both HTTP (web) environments:
+
+```typescript
+import { api } from '@/lib/store-adapter';
+
+// Works in both environments
+const projects = await api.project.list();
+const tasks = await api.task.list(projectId);
+```
+
+See `src/renderer/lib/store-adapter.ts` and `src/renderer/lib/api-client.ts` for the full API.
 
 ## Scripts
 
 | Command | Description |
 |---------|-------------|
 | `npm run dev` | Start development server with hot reload |
-| `npm run build` | Build for production |
-| `npm run package` | Build and package for current platform |
-| `npm run package:win` | Package for Windows |
-| `npm run package:mac` | Package for macOS |
-| `npm run package:linux` | Package for Linux |
+| `npm run build` | Build for production (outputs to `../backend/web/static/`) |
+| `npm run preview` | Preview production build locally |
 | `npm test` | Run unit tests |
 | `npm run test:watch` | Run tests in watch mode |
 | `npm run test:coverage` | Run tests with coverage |
 | `npm run lint` | Check for lint errors |
 | `npm run lint:fix` | Auto-fix lint errors |
 | `npm run typecheck` | Type check TypeScript |
-| `npm audit` | Check for security vulnerabilities |
 
 ## Development Guidelines
 
@@ -159,9 +146,9 @@ src/
 
 ### Security Guidelines
 
-- **Never expose secrets**: API keys, tokens should stay in main process
-- **Validate IPC data**: Always validate data coming through IPC
-- **Use contextBridge**: Never expose Node.js APIs directly to renderer
+- **Never expose secrets**: API keys, tokens should stay on the backend
+- **Validate API responses**: Always validate data coming from the API
+- **Use HTTPS in production**: Ensure the backend is served over HTTPS
 
 ## Troubleshooting
 
@@ -176,21 +163,13 @@ If `npm` command is not recognized after installing Node.js:
    ```
 3. Restart your terminal
 
-### Native module errors
+### API connection issues
 
-If you get errors about native modules (node-pty, etc.):
+If the frontend can't connect to the backend:
 
-```bash
-npm run rebuild
-```
-
-### Windows build tools required
-
-If electron-rebuild fails on Windows, install Visual Studio Build Tools:
-
-1. Download from https://visualstudio.microsoft.com/visual-cpp-build-tools/
-2. Select "Desktop development with C++" workload
-3. Restart terminal and run `npm install` again
+1. Ensure the backend server is running on the correct port
+2. Check CORS settings in the backend
+3. Verify the API base URL in `api-client.ts`
 
 ## Git Hooks
 
@@ -201,8 +180,7 @@ This project uses Husky for Git hooks that run automatically:
 Runs before each commit:
 - **lint-staged**: Lints staged `.ts`/`.tsx` files
 - **typecheck**: TypeScript type checking
-- **lint**: ESLint checks
-- **npm audit**: Security vulnerability check (high severity)
+- **lint**: Biome lint checks
 
 ### Commit Message Format
 

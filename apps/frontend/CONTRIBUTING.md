@@ -4,7 +4,7 @@ Thank you for your interest in contributing! This document provides guidelines f
 
 ## Prerequisites
 
-- **Node.js v24.12.0 LTS** - Download from https://nodejs.org
+- **Node.js 20+** - Download from https://nodejs.org
 - **npm v10+** - Included with Node.js
 - **Git** - For version control
 
@@ -18,8 +18,16 @@ cd Auto-Claude/apps/frontend
 # Install dependencies
 npm install
 
-# Start development server
+# Start development server (with HMR)
 npm run dev
+```
+
+The frontend dev server runs on `http://localhost:5173` and proxies API requests to the backend. Make sure to start the backend server as well:
+
+```bash
+# In a separate terminal
+cd Auto-Claude/apps/backend
+uvicorn web.app:create_app --factory --reload
 ```
 
 ## Code Style
@@ -102,9 +110,6 @@ npm run test:watch
 
 # Coverage report
 npm run test:coverage
-
-# E2E tests
-npm run test:e2e
 ```
 
 ### Writing Tests
@@ -158,8 +163,8 @@ describe('TaskCard', () => {
 
 - Never commit secrets, API keys, or tokens
 - Use environment variables for sensitive data
-- Validate all IPC data
-- Use contextBridge for renderer-main communication
+- Validate all API responses
+- The backend handles authentication; the frontend should not store credentials
 
 ## Questions?
 

@@ -59,16 +59,38 @@
 - **Claude Pro/Max subscription** - [Get one here](https://claude.ai/upgrade)
 - **Claude Code CLI** - `npm install -g @anthropic-ai/claude-code`
 - **Git repository** - Your project must be initialized as a git repo
+- **Python 3.12+** - For the backend server
+- **Node.js 20+** - For building the frontend
 
 ---
 
 ## Quick Start
 
-1. **Download and install** the app for your platform
+### Using Pre-built Releases
+
+1. **Download and install** the app for your platform from the table above
 2. **Open your project** - Select a git repository folder
 3. **Connect Claude** - The app will guide you through OAuth setup
 4. **Create a task** - Describe what you want to build
 5. **Watch it work** - Agents plan, code, and validate autonomously
+
+### Running from Source (Web Mode)
+
+```bash
+# Clone and install dependencies
+git clone https://github.com/AndyMik90/Auto-Claude.git
+cd Auto-Claude
+npm run install:all
+
+# Build and start the web server
+./start-web.sh
+
+# Or manually:
+cd apps/frontend && npm run build
+cd ../backend && uvicorn web.app:create_app --factory --port 3000
+```
+
+The web interface will be available at `http://127.0.0.1:3000`
 
 ---
 
@@ -84,8 +106,8 @@
 | **Memory Layer** | Agents retain insights across sessions for smarter builds |
 | **GitHub/GitLab Integration** | Import issues, investigate with AI, create merge requests |
 | **Linear Integration** | Sync tasks with Linear for team progress tracking |
-| **Cross-Platform** | Native desktop apps for Windows, macOS, and Linux |
-| **Auto-Updates** | App updates automatically when new versions are released |
+| **Web Interface** | Browser-based UI accessible from any platform |
+| **REST API** | Full REST/WebSocket API for programmatic access and integrations |
 
 ---
 
@@ -116,11 +138,17 @@ AI-assisted feature planning with competitor analysis and audience targeting.
 ```
 Auto-Claude/
 ├── apps/
-│   ├── backend/     # Python agents, specs, QA pipeline
-│   └── frontend/    # Electron desktop application
-├── guides/          # Additional documentation
-├── tests/           # Test suite
-└── scripts/         # Build utilities
+│   ├── backend/         # Python agents, specs, QA pipeline
+│   │   ├── cli/         # Command-line interface
+│   │   ├── web/         # FastAPI web server & REST API
+│   │   └── ...          # Core agent logic, integrations
+│   └── frontend/        # React web application (Vite)
+│       └── src/
+│           ├── renderer/    # React UI components
+│           └── shared/      # Shared types and utilities
+├── guides/              # Additional documentation
+├── tests/               # Test suite
+└── scripts/             # Build utilities
 ```
 
 ---
@@ -175,16 +203,29 @@ All releases are:
 | Command | Description |
 |---------|-------------|
 | `npm run install:all` | Install backend and frontend dependencies |
-| `npm start` | Build and run the desktop app |
-| `npm run dev` | Run in development mode with hot reload |
-| `npm run package` | Package for current platform |
-| `npm run package:mac` | Package for macOS |
-| `npm run package:win` | Package for Windows |
-| `npm run package:linux` | Package for Linux |
-| `npm run package:flatpak` | Package as Flatpak (see [guides/linux.md](guides/linux.md)) |
+| `./start-web.sh` | Build frontend and start web server |
+| `./start-web.sh --no-build` | Start web server without rebuilding |
+| `./start-web.sh --port 8080` | Start on custom port |
+| `cd apps/frontend && npm run dev` | Frontend development server with HMR |
+| `cd apps/backend && python -m web.app` | Start API server directly |
 | `npm run lint` | Run linter |
 | `npm test` | Run frontend tests |
 | `npm run test:backend` | Run backend tests |
+
+### CLI Web Server
+
+```bash
+cd apps/backend
+
+# Start web interface (opens browser automatically)
+python -m cli.main --web
+
+# Start on custom port
+python -m cli.main --web --port 8080
+
+# Development mode with auto-reload
+python -m cli.main --web --reload
+```
 
 ---
 
