@@ -133,7 +133,16 @@ The QA validation loop:
 
 ## Workspace Management
 
-Auto Claude uses Git worktrees for isolated builds:
+Auto Claude supports two workspace modes:
+
+| Mode | Flag | Safety | Speed | Use Case |
+|------|------|--------|-------|----------|
+| **Isolated** (default) | `--isolated` | High - main branch untouched | Slower (worktree setup) | Production code, risky changes |
+| **Direct** | `--direct` | Lower - direct edits | Faster | Quick fixes, experiments, trusted changes |
+
+### Isolated Mode (Default)
+
+Creates a git worktree where all changes happen. Your main branch stays safe until you choose to merge:
 
 ```bash
 # Test the feature in the isolated workspace
@@ -151,6 +160,15 @@ python run.py --spec 001 --merge
 
 # Discard if you don't like it
 python run.py --spec 001 --discard
+```
+
+### Direct Mode
+
+Builds directly in your project without worktree isolation. Faster, but uncommitted changes cannot be easily rolled back:
+
+```bash
+# Build directly in project (no isolation)
+python run.py --spec 001 --direct
 ```
 
 ## Interactive Controls

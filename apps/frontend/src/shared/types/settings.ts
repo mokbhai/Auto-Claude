@@ -296,6 +296,8 @@ export interface AppSettings {
   sidebarCollapsed?: boolean;
   // GPU acceleration for terminal rendering (WebGL)
   gpuAcceleration?: GpuAcceleration;
+  // Commit message prefix for Auto Claude commits
+  commitMessagePrefix?: string;
 }
 
 // GPU acceleration mode for terminal WebGL rendering

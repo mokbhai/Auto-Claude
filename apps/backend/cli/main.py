@@ -36,6 +36,7 @@ from .utils import (
     print_banner,
     setup_environment,
 )
+from .web_commands import add_web_arguments, handle_web_command
 from .workspace_commands import (
     handle_cleanup_worktrees_command,
     handle_create_pr_command,
@@ -280,6 +281,9 @@ Environment Variables:
         help="Actually delete files in cleanup (not just preview)",
     )
 
+    # Web server options
+    add_web_arguments(parser)
+
     return parser.parse_args()
 
 
@@ -326,6 +330,11 @@ def _run_cli() -> None:
     # Get model from CLI arg or env var (None if not explicitly set)
     # This allows get_phase_model() to fall back to task_metadata.json
     model = args.model or os.environ.get("AUTO_BUILD_MODEL")
+
+    # Handle --web command (start web interface)
+    if args.web:
+        handle_web_command(args)
+        return
 
     # Handle --list command
     if args.list:

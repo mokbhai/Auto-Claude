@@ -8,7 +8,7 @@ Auto Claude is an autonomous multi-agent coding framework that plans, builds, an
 
 ## Product Overview
 
-Auto Claude is a desktop application (+ CLI) where users describe a goal and AI agents autonomously handle planning, implementation, and QA validation. All work happens in isolated git worktrees so the main branch stays safe.
+Auto Claude is a desktop application (+ CLI) where users describe a goal and AI agents autonomously handle planning, implementation, and QA validation. By default, work happens in isolated git worktrees so the main branch stays safe, but direct mode is available for faster iteration.
 
 **Core workflow:** User creates a task → Spec creation pipeline assesses complexity and writes a specification → Planner agent breaks it into subtasks → Coder agent implements (can spawn parallel subagents) → QA reviewer validates → QA fixer resolves issues → User reviews and merges.
 
@@ -23,7 +23,7 @@ Auto Claude is a desktop application (+ CLI) where users describe a goal and AI 
 - **GitHub/GitLab Integration** — Import issues, AI-powered investigation, PR/MR review and creation
 - **Changelog** — Generate release notes from completed tasks
 - **Memory System** — Graphiti-based knowledge graph retains insights across sessions
-- **Isolated Workspaces** — Git worktree isolation for every build; AI-powered semantic merge
+- **Optional Isolated Workspaces** — Git worktree isolation (default) keeps main branch safe; direct mode available for faster iteration; AI-powered semantic merge
 - **Flexible Authentication** — Use a Claude Code subscription (OAuth) or API profiles with any Anthropic-compatible endpoint (e.g., Anthropic API, z.ai for GLM models)
 - **Multi-Account Swapping** — Register multiple Claude accounts; when one hits a rate limit, Auto Claude automatically switches to an available account
 - **Cross-Platform** — Native desktop app for Windows, macOS, and Linux with auto-updates

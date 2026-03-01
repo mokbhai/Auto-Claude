@@ -208,7 +208,11 @@
     "createTask": "Create Task",
     "worktreeNotice": {
       "title": "Isolated Workspace",
-      "description": "This task runs in an isolated git worktree. Your main branch stays safe until you choose to merge."
+      "description": "This task runs in an isolated git worktree. Your main branch stays safe until you choose to merge.",
+      "isolatedTitle": "Isolated Workspace",
+      "isolatedDescription": "This task will run in an isolated git worktree. Your main branch stays safe until you choose to merge.",
+      "directTitle": "Direct Mode",
+      "directDescription": "Changes will be applied directly to your project. Faster, but uncommitted changes cannot be easily rolled back."
     },
     "gitOptions": {
       "title": "Git Options (optional)",

@@ -1,0 +1,34 @@
+# Include all Python source files
+recursive-include apps/backend *.py
+recursive-include apps/backend *.pyi
+
+# Include web static files (built frontend)
+recursive-include apps/backend/web/static *
+
+# Include prompts and other data files
+recursive-include apps/backend/prompts *.md
+recursive-include apps/backend/security *.txt *.json
+
+# Include configuration files
+include apps/backend/requirements.txt
+include apps/backend/py.typed
+
+# Include documentation
+include README.md
+include LICENSE
+include CLAUDE.md
+
+# Exclude unnecessary files
+recursive-exclude * __pycache__
+recursive-exclude * *.py[cod]
+recursive-exclude * *.pyo
+recursive-exclude * .git
+recursive-exclude * .gitignore
+recursive-exclude * .DS_Store
+recursive-exclude * *.egg-info
+recursive-exclude * .venv
+recursive-exclude * .venv-*
+recursive-exclude * venv
+recursive-exclude * tests
+recursive-exclude * .pytest_cache
+recursive-exclude * .mypy_cache

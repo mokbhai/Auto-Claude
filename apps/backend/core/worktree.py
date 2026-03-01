@@ -186,6 +186,11 @@ class WorktreeManager:
     CLI_TIMEOUT = 60  # 1 minute for CLI commands (gh/glab)
     CLI_QUERY_TIMEOUT = 30  # 30 seconds for CLI queries (gh/glab)
 
+    @staticmethod
+    def _get_commit_prefix() -> str:
+        """Get the commit message prefix from environment variable."""
+        return os.environ.get("COMMIT_MESSAGE_PREFIX", "auto-claude:")
+
     def __init__(
         self,
         project_dir: Path,
@@ -839,7 +844,8 @@ class WorktreeManager:
             # --no-commit stages the merge but doesn't create the commit
             merge_args.append("--no-commit")
         else:
-            merge_args.extend(["-m", f"auto-claude: Merge {info.branch}"])
+            prefix = self._get_commit_prefix()
+            merge_args.extend(["-m", f"{prefix} Merge {info.branch}"])
 
         result = self._run_git(merge_args)
 
@@ -1214,7 +1220,8 @@ class WorktreeManager:
         # Strip remote prefix (e.g., "origin/feat/x" → "feat/x") since gh expects branch names only
         if target.startswith("origin/"):
             target = target[len("origin/") :]
-        pr_title = title or f"auto-claude: {spec_name}"
+        prefix = self._get_commit_prefix()
+        pr_title = title or f"{prefix} {spec_name}"
 
         # Try AI-powered PR body from project's PR template, fall back to spec summary
         pr_body: str | None = None
@@ -1387,7 +1394,8 @@ class WorktreeManager:
         # Strip remote prefix (e.g., "origin/feat/x" → "feat/x") since glab expects branch names only
         if target.startswith("origin/"):
             target = target[len("origin/") :]
-        mr_title = title or f"auto-claude: {spec_name}"
+        prefix = self._get_commit_prefix()
+        mr_title = title or f"{prefix} {spec_name}"
 
         # Get MR body from spec.md if available
         mr_body = self._extract_spec_summary(spec_name)

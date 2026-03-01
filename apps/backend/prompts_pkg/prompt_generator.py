@@ -13,6 +13,7 @@ This approach:
 """
 
 import json
+import os
 import re
 from pathlib import Path
 
@@ -314,6 +315,7 @@ Verify:""")
         sections.append(f"**Manual Verification:**\n{instructions}\n")
 
     # Instructions
+    commit_prefix = os.environ.get("COMMIT_MESSAGE_PREFIX", "auto-claude:")
     sections.append(f"""## Instructions
 
 1. **Read the pattern files** to understand code style and conventions
@@ -323,7 +325,7 @@ Verify:""")
 5. **Commit your changes:**
    ```bash
    git add .
-   git commit -m "auto-claude: {subtask_id} - {description[:50]}"
+   git commit -m "{commit_prefix} {subtask_id} - {description[:50]}"
    ```
 6. **Update the plan** - set this subtask's status to "completed" in implementation_plan.json
 

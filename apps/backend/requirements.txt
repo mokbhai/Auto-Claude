@@ -34,3 +34,9 @@ pydantic>=2.0.0
 
 # Error tracking (optional - requires SENTRY_DSN environment variable)
 sentry-sdk>=2.0.0
+
+# Web server dependencies (for pure web interface)
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+websockets>=12.0
+python-multipart>=0.0.9

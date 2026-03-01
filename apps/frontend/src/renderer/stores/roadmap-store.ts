@@ -353,7 +353,29 @@ export const useRoadmapStore = create<RoadmapState>((set) => ({
     set({ generationStatus: deriveGenerationStatus(actor) });
   },
 
-  setCurrentProjectId: (projectId) => set({ currentProjectId: projectId }),
+  setCurrentProjectId: (projectId) =>
+    set((state) => {
+      // If switching to a different project, clear the state
+      if (state.currentProjectId !== projectId) {
+        // Stop all actors and clear Maps
+        if (generationActor) {
+          generationActor.stop();
+          generationActor = null;
+        }
+        featureActors.forEach((actor) => {
+          actor.stop();
+        });
+        featureActors.clear();
+
+        return {
+          currentProjectId: projectId,
+          roadmap: null,
+          competitorAnalysis: null,
+          generationStatus: initialGenerationStatus
+        };
+      }
+      return { currentProjectId: projectId };
+    }),
 
   updateFeatureStatus: (featureId, status) => {
     // NOTE: getState() is called outside set() because XState actors are external
@@ -726,13 +748,20 @@ async function reconcileLinkedFeatures(projectId: string, roadmap: Roadmap): Pro
 export async function loadRoadmap(projectId: string): Promise<void> {
   const store = useRoadmapStore.getState();
 
-  // Always set current project ID first - this ensures event handlers
-  // only process events for the currently viewed project
+  // Always set current project ID first - this clears state if switching projects
+  // and ensures event handlers only process events for the currently viewed project
   store.setCurrentProjectId(projectId);
 
   // Query if roadmap generation is currently running for this project
   // This restores the generation status when switching back to a project
   const statusResult = await window.electronAPI.getRoadmapStatus(projectId);
+
+  // Check again after async operation to handle race condition
+  const currentState = useRoadmapStore.getState();
+  if (currentState.currentProjectId !== projectId) {
+    // Project changed during async operation, ignore result
+    return;
+  }
   if (statusResult.success && statusResult.data?.isRunning) {
     // Generation is running - try to load persisted progress for more accurate state
     const progressResult = await window.electronAPI.loadRoadmapProgress(projectId);
@@ -774,6 +803,13 @@ export async function loadRoadmap(projectId: string): Promise<void> {
   }
 
   const result = await window.electronAPI.getRoadmap(projectId);
+
+  // Check again after async operation to handle race condition
+  const stateAfterGet = useRoadmapStore.getState();
+  if (stateAfterGet.currentProjectId !== projectId) {
+    return;
+  }
+
   if (result.success && result.data) {
     // Migrate roadmap to latest schema if needed
     const migratedRoadmap = migrateRoadmapIfNeeded(result.data);

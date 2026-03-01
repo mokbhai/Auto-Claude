@@ -290,6 +290,11 @@
       "label": "Mode YOLO",
       "description": "Démarrer Claude avec le flag --dangerously-skip-permissions, contournant toutes les invites de sécurité. À utiliser avec une extrême prudence.",
       "warning": "Ce mode contourne le système de permissions de Claude. N'activez que si vous faites entièrement confiance au code exécuté."
+    },
+    "commitPrefix": {
+      "label": "Préfixe des messages de commit",
+      "description": "Préfixe pour les messages de commit, titres de PR et titres de MR créés par Auto Claude",
+      "placeholder": "auto-claude:"
     }
   },
   "updates": {

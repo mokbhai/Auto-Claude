@@ -208,7 +208,11 @@
     "createTask": "Créer la tâche",
     "worktreeNotice": {
       "title": "Espace de travail isolé",
-      "description": "Cette tâche s'exécute dans un worktree git isolé. Votre branche principale reste protégée jusqu'à ce que vous choisissiez de fusionner."
+      "description": "Cette tâche s'exécute dans un worktree git isolé. Votre branche principale reste protégée jusqu'à ce que vous choisissiez de fusionner.",
+      "isolatedTitle": "Espace de travail isolé",
+      "isolatedDescription": "Cette tâche s'exécutera dans un worktree git isolé. Votre branche principale reste protégée jusqu'à ce que vous choisissiez de fusionner.",
+      "directTitle": "Mode direct",
+      "directDescription": "Les changements seront appliqués directement à votre projet. Plus rapide, mais les changements non validés ne peuvent pas être facilement annulés."
     },
     "gitOptions": {
       "title": "Options Git (optionnel)",

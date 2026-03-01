@@ -71,7 +71,9 @@ export const DEFAULT_APP_SETTINGS = {
   // GPU acceleration for terminal rendering
   // Default to 'off' until WebGL stability is proven across all GPU drivers.
   // Users can opt-in via Settings > Display > GPU Acceleration.
-  gpuAcceleration: 'off' as const
+  gpuAcceleration: 'off' as const,
+  // Commit message prefix for Auto Claude commits, PRs, and MRs
+  commitMessagePrefix: 'auto-claude:'
 };
 
 // ============================================

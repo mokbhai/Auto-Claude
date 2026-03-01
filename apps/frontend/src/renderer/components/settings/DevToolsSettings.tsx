@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Code, Terminal, RefreshCw, Loader2, Check, FolderOpen, AlertTriangle } from 'lucide-react';
+import { Code, Terminal, RefreshCw, Loader2, Check, FolderOpen, AlertTriangle, GitCommit } from 'lucide-react';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -419,6 +419,29 @@ export function DevToolsSettings({ settings, onSettingsChange }: DevToolsSetting
               {t('devtools.yoloMode.warning', 'This mode bypasses Claude\'s permission system. Only enable if you fully trust the code being executed.')}
             </p>
           )}
+        </div>
+
+        {/* Commit Message Prefix */}
+        <div className="space-y-3 pt-2 border-t border-border">
+          <Label htmlFor="commit-message-prefix" className="flex items-center gap-2 text-sm font-medium">
+            <GitCommit className="h-4 w-4" />
+            {t('devtools.commitPrefix.label', 'Commit Message Prefix')}
+          </Label>
+          <Input
+            id="commit-message-prefix"
+            value={settings.commitMessagePrefix ?? 'auto-claude:'}
+            onChange={(e) => {
+              onSettingsChange({
+                ...settings,
+                commitMessagePrefix: e.target.value
+              });
+            }}
+            placeholder={t('devtools.commitPrefix.placeholder', 'auto-claude:')}
+            className="max-w-md"
+          />
+          <p className="text-xs text-muted-foreground">
+            {t('devtools.commitPrefix.description', 'Prefix for commit messages, PR titles, and MR titles created by Auto Claude')}
+          </p>
         </div>
 
         {/* Detection Summary */}

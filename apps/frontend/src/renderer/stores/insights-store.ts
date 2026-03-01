@@ -19,6 +19,7 @@ interface ToolUsage {
 
 interface InsightsState {
   // Data
+  currentProjectId: string | null; // Track which project's data is loaded
   session: InsightsSession | null;
   sessions: InsightsSessionSummary[]; // List of all sessions
   status: InsightsChatStatus;
@@ -32,6 +33,7 @@ interface InsightsState {
   pendingImages: ImageAttachment[]; // Images pending attachment to next message
 
   // Actions
+  setCurrentProjectId: (projectId: string | null) => void;
   setSession: (session: InsightsSession | null) => void;
   setSessions: (sessions: InsightsSessionSummary[]) => void;
   setStatus: (status: InsightsChatStatus) => void;
@@ -58,6 +60,7 @@ const initialStatus: InsightsChatStatus = {
 
 export const useInsightsStore = create<InsightsState>((set, _get) => ({
   // Initial state
+  currentProjectId: null,
   session: null,
   sessions: [],
   status: initialStatus,
@@ -71,6 +74,26 @@ export const useInsightsStore = create<InsightsState>((set, _get) => ({
   pendingImages: [],
 
   // Actions
+  setCurrentProjectId: (projectId) =>
+    set((state) => {
+      // If switching to a different project, clear the state
+      if (state.currentProjectId !== projectId) {
+        return {
+          currentProjectId: projectId,
+          session: null,
+          sessions: [],
+          status: initialStatus,
+          pendingMessage: '',
+          streamingContent: '',
+          streamingTasks: [],
+          currentTool: null,
+          toolsUsed: [],
+          pendingImages: []
+        };
+      }
+      return { currentProjectId: projectId };
+    }),
+
   setSession: (session) => set({ session }),
 
   setSessions: (sessions) => set({ sessions }),
@@ -239,11 +262,24 @@ export async function loadInsightsSessions(projectId: string, includeArchived?: 
 }
 
 export async function loadInsightsSession(projectId: string, includeArchived?: boolean): Promise<void> {
+  const store = useInsightsStore.getState();
+
+  // Set current project ID first (this clears state if switching projects)
+  store.setCurrentProjectId(projectId);
+
   const result = await window.electronAPI.getInsightsSession(projectId);
+
+  // Check again after async operation to handle race condition
+  const currentState = useInsightsStore.getState();
+  if (currentState.currentProjectId !== projectId) {
+    // Project changed during async operation, ignore result
+    return;
+  }
+
   if (result.success && result.data) {
-    useInsightsStore.getState().setSession(result.data);
+    currentState.setSession(result.data);
   } else {
-    useInsightsStore.getState().setSession(null);
+    currentState.setSession(null);
   }
   // Also load the sessions list
   await loadInsightsSessions(projectId, includeArchived);
@@ -402,9 +438,18 @@ export async function createTaskFromSuggestion(
 export function setupInsightsListeners(): () => void {
   const store = useInsightsStore.getState;
 
+  // Helper to check if event is for the current project
+  const isCurrentProject = (eventProjectId: string): boolean => {
+    const currentProjectId = store().currentProjectId;
+    return currentProjectId === eventProjectId;
+  };
+
   // Listen for streaming chunks
   const unsubStreamChunk = window.electronAPI.onInsightsStreamChunk(
-    (_projectId, chunk: InsightsStreamChunk) => {
+    (projectId, chunk: InsightsStreamChunk) => {
+      // Only process events for the currently viewed project
+      if (!isCurrentProject(projectId)) return;
+
       switch (chunk.type) {
         case 'text':
           if (chunk.content) {
@@ -464,12 +509,16 @@ export function setupInsightsListeners(): () => void {
   );
 
   // Listen for status updates
-  const unsubStatus = window.electronAPI.onInsightsStatus((_projectId, status) => {
+  const unsubStatus = window.electronAPI.onInsightsStatus((projectId, status) => {
+    // Only process events for the currently viewed project
+    if (!isCurrentProject(projectId)) return;
     store().setStatus(status);
   });
 
   // Listen for errors
-  const unsubError = window.electronAPI.onInsightsError((_projectId, error) => {
+  const unsubError = window.electronAPI.onInsightsError((projectId, error) => {
+    // Only process events for the currently viewed project
+    if (!isCurrentProject(projectId)) return;
     store().setStatus({
       phase: 'error',
       error
@@ -478,7 +527,10 @@ export function setupInsightsListeners(): () => void {
 
   // Listen for session updates (e.g., after assistant message saved with auto-generated title)
   const unsubSessionUpdated = window.electronAPI.onInsightsSessionUpdated(
-    (_projectId, session: InsightsSession) => {
+    (projectId, session: InsightsSession) => {
+      // Only process events for the currently viewed project
+      if (!isCurrentProject(projectId)) return;
+
       // Update current session if it matches
       const currentSession = store().session;
       if (currentSession?.id === session.id) {

@@ -78,7 +78,7 @@
 |---------|-------------|
 | **Autonomous Tasks** | Describe your goal; agents handle planning, implementation, and validation |
 | **Parallel Execution** | Run multiple builds simultaneously with up to 12 agent terminals |
-| **Isolated Workspaces** | All changes happen in git worktrees - your main branch stays safe |
+| **Isolated Workspaces** | By default, changes happen in git worktrees - your main branch stays safe (direct mode optional) |
 | **Self-Validating QA** | Built-in quality assurance loop catches issues before you review |
 | **AI-Powered Merge** | Automatic conflict resolution when integrating back to main |
 | **Memory Layer** | Agents retain insights across sessions for smarter builds |
