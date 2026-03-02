@@ -636,7 +636,6 @@ function createWebAPI(): ElectronAPI {
     // ============================================
     // Memory Infrastructure
     // ============================================
-    getMemoryStatus: async () => ({ success: true, data: { status: 'unavailable' } }),
     listMemoryDatabases: async () => ({ success: true, data: [] }),
     testMemoryConnection: async () => ({ success: true, data: { success: false } }),
 
@@ -668,7 +667,6 @@ function createWebAPI(): ElectronAPI {
     readExistingChangelog: async () => ({ success: true, data: null }),
     suggestVersion: async () => ({ success: true, data: { suggested: '1.0.0' } }),
     suggestVersionFromCommits: async () => ({ success: true, data: { suggested: '1.0.0' } }),
-    getBranches: async () => ({ success: true, data: [] }),
     getTags: async () => ({ success: true, data: [] }),
     getCommitsPreview: async () => ({ success: true, data: [] }),
     saveChangelogImage: async () => ({ success: true, data: '' }),
@@ -827,15 +825,6 @@ function createWebAPI(): ElectronAPI {
       data: { hasChanges: false, changedFileCount: 0 },
     }),
 
-    // ============================================
-    // Misc
-    // ============================================
-    createTerminalWorktree: async (terminalId: string, branchName: string, basePath?: string) =>
-      apiClient.terminal.createWorktree(terminalId, branchName, basePath),
-    listTerminalWorktrees: async () => apiClient.terminal.getSessions(),
-    removeTerminalWorktree: async (terminalId: string) =>
-      apiClient.terminal.removeWorktree(terminalId),
-    listOtherWorktrees: async () => ({ success: true, data: [] }),
   } as ElectronAPI;
 }
 
